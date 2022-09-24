@@ -24,14 +24,27 @@ function buildCalendarHomepage() {
   calendars.forEach(calendar => {
     calendarSelection.addItem(calendar.getTitle(), calendar.getId(), false);
   });
-  var minTimeInput = CardService.newTextInput()
-      .setFieldName('min_time')
+  var minTimeInput = CardService.newTimePicker()
+    .setTitle("Minimum time of day (local)")
+    .setFieldName("min_time")
+    .setHours(9)
+    .setMinutes(0);
+  var maxTimeInput = CardService.newTimePicker()
+    .setTitle("Maximum time of day (local)")
+    .setFieldName("max_time")
+    .setHours(18)
+    .setMinutes(0);
+
+  var minTimeSlotInput = CardService.newTextInput()
+      .setFieldName('min_time_slot')
       .setTitle('Minimum time slot size (in minutes)');
   var boundarySelection = CardService.newSelectionInput()
     .setType(CardService.SelectionInputType.DROPDOWN)
     .setTitle("Select the boundary for start/end")
-    .setFieldName("boundary_selection")
+    .setFieldName("boundary")
     .addItem("Any", 0, true)
+    .addItem("5 minute mark", 5, false)
+    .addItem("10 minute mark", 10, false)
     .addItem("15 minute mark", 15, false)
     .addItem("30 minute mark", 30, false)
     .addItem("1 hour mark", 60, false);
@@ -48,6 +61,11 @@ function buildCalendarHomepage() {
   var buttonSet = CardService.newButtonSet()
       .addButton(button);
 
+  var allDayEventSelection = CardService.newSelectionInput()
+      .setType(CardService.SelectionInputType.CHECK_BOX)
+      .setFieldName("ignore_all_day_events")
+      .addItem("Ignore all-day events", true, false);
+
   // Create a footer to be shown at the bottom.
   var footer = CardService.newFixedFooter()
       .setPrimaryButton(CardService.newTextButton()
@@ -61,8 +79,11 @@ function buildCalendarHomepage() {
       .addWidget(endDateInput)
       .addWidget(calendarSelection)
       .addWidget(minTimeInput)
+      .addWidget(maxTimeInput)
+      .addWidget(minTimeSlotInput)
       .addWidget(paddingInput)
       .addWidget(boundarySelection)
+      .addWidget(allDayEventSelection)
       .addWidget(buttonSet);
   var card = CardService.newCardBuilder()
       .addSection(section)
@@ -99,64 +120,4 @@ function exportAvailability(e) {
   return CardService.newActionResponseBuilder()
     .setNavigation(nav)
     .build();
-}
-
-function formatTime(date) {
-  var hours = date.getHours();
-  var minutes = date.getMinutes();
-  var ampm = hours >= 12 ? 'pm' : 'am';
-  hours = hours % 12;
-  hours = hours ? hours : 12; // the hour '0' should be '12'
-  minutes = minutes < 10 ? '0'+ minutes : minutes;
-  return hours + ':' + minutes + ampm;
-}
-
-function getAvailability(config, timezone) {
-  events = Array();
-  var startDate = new Date(config.start_date[0].msSinceEpoch - timezone.offSet); // beginning of day (local)
-  var endDate = new Date(config.end_date[0].msSinceEpoch - timezone.offSet + 86399999); // end of day (local)
-  config.calendar_selection.forEach(calendarId => {
-    calendar = CalendarApp.getCalendarById(calendarId); 
-    console.log(calendar.getTitle());
-    events.push(...calendar.getEvents(startDate, endDate));
-  });
-
-  events.sort((a, b) => { 
-    return a.getStartTime() - b.getStartTime();
-  });
-
-  var prevEndTime = startDate;
-  var availabilitySlots = [];
-  events.forEach(event => {
-    console.log(event.getTitle());
-    console.log(event.getStartTime());
-    console.log(event.getEndTime());
-    if (event.getStartTime() > prevEndTime) {
-      availabilitySlots.push(...getAvailabilitySlots(prevEndTime, event.getStartTime()));
-    }
-    if (event.getEndTime() > prevEndTime) {
-      prevEndTime = event.getEndTime();
-    }
-  });
-  if (prevEndTime < endDate) {
-    availabilitySlots.push(...getAvailabilitySlots(prevEndTime, endDate));
-  }
-  console.log(availabilitySlots);
-  return availabilitySlots;
-}
-
-function getAvailabilitySlots(start, end) {
-  arr = [];
-  while (start.getDate() != end.getDate()) {
-    var endDay = new Date(start.valueOf());
-    endDay.setHours(23, 59, 59, 999);
-    console.log(start, endDay);
-    arr.push([new Date(start.valueOf()), endDay]);
-    start.setDate(start.getDate() + 1);
-    start.setHours(0, 0, 0, 0);
-  }
-  if (end - start > 0) {
-    arr.push([start, end]);
-  }
-  return arr;
 }
