@@ -25,12 +25,12 @@ function buildCalendarHomepage() {
     calendarSelection.addItem(calendar.getTitle(), calendar.getId(), false);
   });
   var minTimeInput = CardService.newTimePicker()
-    .setTitle("Minimum time of day (local)")
+    .setTitle("Minimum time of day (your local time)")
     .setFieldName("min_time")
     .setHours(9)
     .setMinutes(0);
   var maxTimeInput = CardService.newTimePicker()
-    .setTitle("Maximum time of day (local)")
+    .setTitle("Maximum time of day (your local time)")
     .setFieldName("max_time")
     .setHours(18)
     .setMinutes(0);
@@ -40,7 +40,7 @@ function buildCalendarHomepage() {
       .setTitle('Minimum time slot size (in minutes)');
   var boundarySelection = CardService.newSelectionInput()
     .setType(CardService.SelectionInputType.DROPDOWN)
-    .setTitle("Select the boundary for start/end")
+    .setTitle("Select the boundary for start/end:")
     .setFieldName("boundary")
     .addItem("Any", 0, true)
     .addItem("5 minute mark", 5, false)
@@ -48,9 +48,16 @@ function buildCalendarHomepage() {
     .addItem("15 minute mark", 15, false)
     .addItem("30 minute mark", 30, false)
     .addItem("1 hour mark", 60, false);
+  var timezoneSelection = CardService.newSelectionInput()
+    .setType(CardService.SelectionInputType.DROPDOWN)
+    .setTitle("Select timezone to export availability in:")
+    .setFieldName("timezone");
+    timezones.forEach(timezone => {
+      timezoneSelection.addItem(timezone, timezone, false);
+    });
   var paddingInput = CardService.newTextInput()
       .setFieldName('padding')
-      .setTitle('Padding before/after scheduled events');
+      .setTitle('Padding before/after scheduled events (in minutes)');
   var action = CardService.newAction()
       .setFunctionName('exportAvailability');
       // .setParameters({text: text, isHomepage: isHomepage.toString()});
@@ -83,6 +90,7 @@ function buildCalendarHomepage() {
       .addWidget(minTimeSlotInput)
       .addWidget(paddingInput)
       .addWidget(boundarySelection)
+      .addWidget(timezoneSelection)
       .addWidget(allDayEventSelection)
       .addWidget(buttonSet);
   var card = CardService.newCardBuilder()
@@ -97,7 +105,7 @@ function exportAvailability(e) {
   var availability = getAvailability(e.formInputs, e.userTimezone);
   // download/show
   // var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-  var availabilityText = "";
+  var availabilityText = `Availability in ${e.formInput.timezone}\n`;
   var prevDate = null;
   availability.forEach(range => {
     if (prevDate != range[0].getDate()) {

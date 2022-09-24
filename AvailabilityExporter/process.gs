@@ -12,6 +12,10 @@ function addMinutes(date, minutes) {
     return new Date(date.getTime() + minutes * 60000);
 }
 
+function convertTimezone(date, timezone) {
+    return new Date(date.toLocaleString("en-US", {timeZone: timezone}));   
+}
+
 function getAvailability(config, timezone) {
   events = Array();
   var startDate = new Date(config.start_date[0].msSinceEpoch - timezone.offSet); // beginning of day (local)
@@ -36,7 +40,7 @@ function getAvailability(config, timezone) {
 
     if (!config.ignore_all_day_events || !event.isAllDayEvent()) {
       var start = addMinutes(event.getStartTime(), -1 * padding);
-      var end = addMinutes(event.getEndTime(), padding)
+      var end = addMinutes(event.getEndTime(), padding);
       if (start > prevEndTime) {
         availabilitySlots.push(...getAvailabilitySlots(prevEndTime, start, config));
       }
@@ -63,7 +67,8 @@ function getAvailabilitySlots(start, end, config) {
       endDay, config.min_time[0], 
       config.max_time[0], 
       config.min_time_slot[0],
-      config.boundary[0]);
+      config.boundary[0],
+      config.timezone[0]);
     if (range) arr.push(range);
     start.setDate(start.getDate() + 1);
     start.setHours(0, 0, 0, 0);
@@ -75,13 +80,14 @@ function getAvailabilitySlots(start, end, config) {
       config.min_time[0], 
       config.max_time[0], 
       config.min_time_slot[0],
-      config.boundary[0]);
+      config.boundary[0],
+      config.timezone[0]);
     if (range) arr.push(range);
   }
   return arr;
 }
 
-function trimSlot(start, end, minTime, maxTime, minTimeSlot, boundary) {
+function trimSlot(start, end, minTime, maxTime, minTimeSlot, boundary, timezone) {
   if (boundary > 0) {
     const ms = 1000 * 60 * boundary;
     if (start.getMinutes() % boundary != 0) {
@@ -112,7 +118,10 @@ function trimSlot(start, end, minTime, maxTime, minTimeSlot, boundary) {
   }
 
   if ((end - start) / 1000 / 60 >= minTimeSlot) {
-    return [start, end];
+    return [
+      convertTimezone(start, timezone), 
+      convertTimezone(end, timezone)
+    ];
   }
   return null;
 }

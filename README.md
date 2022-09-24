@@ -11,6 +11,7 @@ Options:
 - [Done] Specify padding before/after scheduled events
 - [Done] Specify min/max time of the day (you wouldn't want to tell a recruiter you're free at 3am for an interview)
 - [Done] Specify minimum time slot size (doesn't make sense to share a 15 minute availability if you're trying to schedule a 1-hr meeting)
-- [In Progress] Specify time zone to export as
+- [Done] Specify time zone to export as
 - [Done] Specify start/end boundaries -- 5, 10, 15, 30, or 1 hour boundaries (in case you want to avoid telling someone you're available at weird start/end times, like 1:03pm - 3:47pm)
 - [Done] Specify to exclude all-day events in what is considered busy time
+- [In Progress] Input validation / error checking
