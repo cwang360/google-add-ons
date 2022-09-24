@@ -13,7 +13,7 @@ function addMinutes(date, minutes) {
 }
 
 function convertTimezone(date, timezone) {
-    return new Date(date.toLocaleString("en-US", {timeZone: timezone}));   
+    return new Date(date.toLocaleString("en-US", {timezone: timezone}));   
 }
 
 function getAvailability(config, timezone) {
@@ -88,17 +88,6 @@ function getAvailabilitySlots(start, end, config) {
 }
 
 function trimSlot(start, end, minTime, maxTime, minTimeSlot, boundary, timezone) {
-  if (boundary > 0) {
-    const ms = 1000 * 60 * boundary;
-    if (start.getMinutes() % boundary != 0) {
-      // round up
-      start = new Date(Math.ceil(start.getTime() / ms) * ms)
-    }
-    if (end.getMinutes() % boundary != 0) {
-      // round down
-      end = new Date(Math.floor(end.getTime() / ms) * ms)
-    }
-  }
 
   if (start.getHours() < minTime.hours || 
     (start.getHours() ==  minTime.hours && start.getMinutes() < minTime.minutes)) {
@@ -117,7 +106,20 @@ function trimSlot(start, end, minTime, maxTime, minTimeSlot, boundary, timezone)
       0);
   }
 
-  if ((end - start) / 1000 / 60 >= minTimeSlot) {
+  if (boundary > 0) {
+    const ms = 1000 * 60 * boundary;
+    if (start.getMinutes() % boundary != 0) {
+      // round up
+      start = new Date(Math.ceil(start.getTime() / ms) * ms)
+    }
+    if (end.getMinutes() % boundary != 0) {
+      // round down
+      end = new Date(Math.floor(end.getTime() / ms) * ms)
+    }
+  }
+
+
+  if ((end - start) / 1000 / 60 >= minTimeSlot && (end - start) != 0) {
     return [
       convertTimezone(start, timezone), 
       convertTimezone(end, timezone)

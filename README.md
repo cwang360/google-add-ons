@@ -14,4 +14,4 @@ Options:
 - [Done] Specify time zone to export as
 - [Done] Specify start/end boundaries -- 5, 10, 15, 30, or 1 hour boundaries (in case you want to avoid telling someone you're available at weird start/end times, like 1:03pm - 3:47pm)
 - [Done] Specify to exclude all-day events in what is considered busy time
-- [In Progress] Input validation / error checking
+- [Done] Input validation / error checking

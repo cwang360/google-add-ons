@@ -37,6 +37,7 @@ function buildCalendarHomepage() {
 
   var minTimeSlotInput = CardService.newTextInput()
       .setFieldName('min_time_slot')
+      .setValue('0')
       .setTitle('Minimum time slot size (in minutes)');
   var boundarySelection = CardService.newSelectionInput()
     .setType(CardService.SelectionInputType.DROPDOWN)
@@ -57,6 +58,7 @@ function buildCalendarHomepage() {
     });
   var paddingInput = CardService.newTextInput()
       .setFieldName('padding')
+      .setValue('0')
       .setTitle('Padding before/after scheduled events (in minutes)');
   var action = CardService.newAction()
       .setFunctionName('exportAvailability');
@@ -102,30 +104,61 @@ function buildCalendarHomepage() {
 
 function exportAvailability(e) {
   console.log(e);
-  var availability = getAvailability(e.formInputs, e.userTimezone);
-  // download/show
-  // var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-  var availabilityText = `Availability in ${e.formInput.timezone}\n`;
-  var prevDate = null;
-  availability.forEach(range => {
-    if (prevDate != range[0].getDate()) {
-      availabilityText += `\n${range[0].toLocaleDateString("en-US")}: ${formatTime(range[0])} - ${formatTime(range[1])}`;
-      prevDate = range[0].getDate();
-    } else {
-      availabilityText += `, ${formatTime(range[0])} - ${formatTime(range[1])}`
-    }
-    // availabilityText += `${range[0].toLocaleDateString("en-US")}: ${formatTime(range[0])} - ${formatTime(range[1])} ${range[0].toTimeString().match(/\((.+)\)/)[1]}\n`;
-  });
-  var availabilityParagraph = CardService.newTextParagraph()
-    .setText(availabilityText);
-  var results = CardService.newCardSection()
-    .addWidget(availabilityParagraph);
-  var card = CardService.newCardBuilder()
-    .addSection(results)
-    .build();
+  var errorText = verifyInputs(e.formInputs);
+  if (errorText) {
+    var errorParagraph = CardService.newTextParagraph()
+      .setText(errorText);
+    var results = CardService.newCardSection()
+      .addWidget(errorParagraph);
+  } else {
+    var availability = getAvailability(e.formInputs, e.userTimezone);
+    // download/show
+    // var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    var availabilityText = `Availability in ${e.formInput.timezone}\n`;
+    var prevDate = null;
+    availability.forEach(range => {
+      if (prevDate != range[0].getDate()) {
+        availabilityText += `\n${range[0].toLocaleDateString("en-US")}: ${formatTime(range[0])} - ${formatTime(range[1])}`;
+        prevDate = range[0].getDate();
+      } else {
+        availabilityText += `, ${formatTime(range[0])} - ${formatTime(range[1])}`
+      }
+      // availabilityText += `${range[0].toLocaleDateString("en-US")}: ${formatTime(range[0])} - ${formatTime(range[1])} ${range[0].toTimeString().match(/\((.+)\)/)[1]}\n`;
+    });
+    var availabilityParagraph = CardService.newTextParagraph()
+      .setText(availabilityText);
+    var results = CardService.newCardSection()
+      .addWidget(availabilityParagraph);
+  }
 
-  let nav = CardService.newNavigation().pushCard(card);
+  var card = CardService.newCardBuilder()
+      .addSection(results)
+      .build();
+  var nav = CardService.newNavigation().pushCard(card);
   return CardService.newActionResponseBuilder()
     .setNavigation(nav)
     .build();
+}
+
+function verifyInputs(form) {
+  if (!form.calendar_selection || form.calendar_selection.length == 0) 
+    return "Please select at least one calendar";
+  if (!form.start_date) 
+    return "Please enter a start date";
+  if (!form.end_date) 
+    return "Please enter an end date";
+  if (form.end_date[0].msSinceEpoch < form.start_date[0].msSinceEpoch) 
+    return "Please choose a valid start/end date range (start date cannot be later than end date)";
+  if (!form.min_time)
+    return "Please enter a minimum time of day";
+  if (!form.max_time)
+    return "Please enter a maximum time of day";
+  if (form.max_time[0].hours < form.min_time[0].hours || 
+    (form.max_time[0].hours == form.min_time[0].hours && form.max_time[0].minutes < form.min_time[0].minutes))
+    return "Please enter a valid min/max time range (minimum time cannot be greater than maximum time)";
+  if (!form.min_time_slot)
+    return "Please enter a minimum time slot size";
+  if (!form.padding)
+    return "Please enter a padding amount before/after scheduled events";
+  return null;
 }
