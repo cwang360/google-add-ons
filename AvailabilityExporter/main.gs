@@ -74,6 +74,10 @@ function buildCalendarHomepage() {
       .setType(CardService.SelectionInputType.CHECK_BOX)
       .setFieldName("ignore_all_day_events")
       .addItem("Ignore all-day events", true, false);
+  var excludeWeekendSelection = CardService.newSelectionInput()
+      .setType(CardService.SelectionInputType.CHECK_BOX)
+      .setFieldName("exclude_weekends")
+      .addItem("Exclude weekends", true, true);
 
   // Create a footer to be shown at the bottom.
   var footer = CardService.newFixedFooter()
@@ -94,6 +98,7 @@ function buildCalendarHomepage() {
       .addWidget(boundarySelection)
       .addWidget(timezoneSelection)
       .addWidget(allDayEventSelection)
+      .addWidget(excludeWeekendSelection)
       .addWidget(buttonSet);
   var card = CardService.newCardBuilder()
       .addSection(section)
@@ -158,7 +163,20 @@ function verifyInputs(form) {
     return "Please enter a valid min/max time range (minimum time cannot be greater than maximum time)";
   if (!form.min_time_slot)
     return "Please enter a minimum time slot size";
+  if (!validInt(form.min_time_slot))
+    return "Please enter a valid integer minimum time slot size";
   if (!form.padding)
     return "Please enter a padding amount before/after scheduled events";
+  if (!validInt(form.padding))
+    return "Please enter a valid integer padding";
   return null;
+}
+
+function validInt(str) {
+  const num = Number(str);
+
+  if (Number.isInteger(num) && num >= 0) {
+    return true;
+  }
+  return false;
 }

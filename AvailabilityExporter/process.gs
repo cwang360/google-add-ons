@@ -12,8 +12,8 @@ function addMinutes(date, minutes) {
     return new Date(date.getTime() + minutes * 60000);
 }
 
-function convertTimezone(date, timezone) {
-    return new Date(date.toLocaleString("en-US", {timezone: timezone}));   
+function convertTimezone(date, tz) {
+    return new Date(date.toLocaleString("en-US", {timeZone: tz}));   
 }
 
 function getAvailability(config, timezone) {
@@ -68,7 +68,8 @@ function getAvailabilitySlots(start, end, config) {
       config.max_time[0], 
       config.min_time_slot[0],
       config.boundary[0],
-      config.timezone[0]);
+      config.timezone[0],
+      config.exclude_weekends);
     if (range) arr.push(range);
     start.setDate(start.getDate() + 1);
     start.setHours(0, 0, 0, 0);
@@ -81,14 +82,15 @@ function getAvailabilitySlots(start, end, config) {
       config.max_time[0], 
       config.min_time_slot[0],
       config.boundary[0],
-      config.timezone[0]);
+      config.timezone[0],
+      config.exclude_weekends);
     if (range) arr.push(range);
   }
   return arr;
 }
 
-function trimSlot(start, end, minTime, maxTime, minTimeSlot, boundary, timezone) {
-
+function trimSlot(start, end, minTime, maxTime, minTimeSlot, boundary, timezone, excludeWeekend) {
+  if (excludeWeekend && isWeekend(start)) return null;
   if (start.getHours() < minTime.hours || 
     (start.getHours() ==  minTime.hours && start.getMinutes() < minTime.minutes)) {
     start.setHours(
@@ -126,4 +128,8 @@ function trimSlot(start, end, minTime, maxTime, minTimeSlot, boundary, timezone)
     ];
   }
   return null;
+}
+
+function isWeekend(date) {
+  return date.getDay() === 0 || date.getDay() === 6;
 }
